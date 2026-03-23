@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          Role      @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  member        Member?
+}
+
+model Member {
+  id            String         @id @default(cuid())
+  name          String
+  pseudo        String         @unique
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions Contribution[]
+  createdAt     DateTime       @default(now())
+}
+
+model Period {
+  id            String         @id @default(cuid())
+  month         Int
+  year          Int
+  amount        Float
+  createdAt     DateTime       @default(now())
+  contributions Contribution[]
+
+  @@unique([month, year])
+}
+
+model Contribution {
+  id        String             @id @default(cuid())
+  status    ContributionStatus @default(PENDING)
+  paidAt    DateTime?
+  memberId  String
+  periodId  String
+  member    Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  period    Period             @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, periodId])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  label       String
+  amount      Float
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum ContributionStatus {
+  PENDING
+  PAID
+  LATE
+}
