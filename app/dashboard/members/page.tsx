@@ -16,21 +16,17 @@ export default async function MembersPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="space-y-8">
 
-        <div className="flex items-center justify-between">
-          <div>
-            <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
-              ← Dashboard
-            </a>
-            <h1 className="text-3xl font-bold mt-1">👥 Membres</h1>
-          </div>
-        </div>
-
-        <MembersClient members={members} />
-
+      <div>
+        <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
+          ← Dashboard
+        </a>
+        <h1 className="text-3xl font-bold mt-1">👥 Membres</h1>
       </div>
-    </main>
+
+      <MembersClient members={members} />
+
+    </div>
   )
 }

@@ -1,10 +1,14 @@
 import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 
+type AuthUser = {
+  role?: string
+}
+
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
-  const role = (req.auth?.user as any)?.role
+  const role = (req.auth?.user as AuthUser | undefined)?.role
 
   if (!isLoggedIn && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", req.url))
