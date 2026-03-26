@@ -34,10 +34,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex items-center justify-center p-6">
+    <main className="min-h-screen bg-linear-to-br from-gray-950 via-gray-900 to-black text-white flex items-center justify-center p-6">
 
       {/* Background glow */}
-      <div className="absolute w-[500px] h-[500px] bg-violet-600/20 blur-3xl rounded-full -z-10" />
+      <div className="absolute w-125 h-125 bg-violet-600/20 blur-3xl rounded-full -z-10" />
 
       <div className="w-full max-w-md space-y-8">
 
