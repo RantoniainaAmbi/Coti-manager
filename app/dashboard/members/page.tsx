@@ -16,13 +16,10 @@ export default async function MembersPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
 
       <div>
-        <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
-          ← Dashboard
-        </a>
-        <h1 className="text-3xl font-bold mt-1">Membres</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mt-1">Membres</h1>
       </div>
 
       <MembersClient members={members} />
