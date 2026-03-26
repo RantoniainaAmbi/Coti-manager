@@ -24,16 +24,15 @@ export default async function PeriodsPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <div>
-          <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
-            ← Dashboard
-          </a>
-          <h1 className="text-3xl font-bold mt-1">📅 Cotisations</h1>
-        </div>
-        <PeriodsClient periods={periods} members={members} />
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold">Cotisations</h1>
+        <p className="text-sm text-gray-400">
+          Gestion des périodes et paiements
+        </p>
       </div>
-    </main>
+
+      <PeriodsClient periods={periods} members={members} />
+    </div>
   )
 }

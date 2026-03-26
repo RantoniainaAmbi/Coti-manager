@@ -22,7 +22,7 @@ export default async function MembersPage() {
         <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
           ← Dashboard
         </a>
-        <h1 className="text-3xl font-bold mt-1">👥 Membres</h1>
+        <h1 className="text-3xl font-bold mt-1">Membres</h1>
       </div>
 
       <MembersClient members={members} />

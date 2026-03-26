@@ -8,12 +8,17 @@ const MONTHS = [
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
 ]
 
+type Member = {
+  id: string
+  name: string
+  pseudo: string
+}
+
 type Contribution = {
   id: string
-  status: string
-  paidAt: Date | null
+  status: "PAID" | "PENDING" | "LATE"
   memberId: string
-  member: { id: string; name: string; pseudo: string }
+  member: Member
 }
 
 type Period = {
@@ -24,20 +29,14 @@ type Period = {
   contributions: Contribution[]
 }
 
-type Member = {
-  id: string
-  name: string
-  pseudo: string
-}
-
-export default function PeriodsClient({
-  periods,
-  members,
-}: {
+type Props = {
   periods: Period[]
   members: Member[]
-}) {
+}
+
+export default function PeriodsClient({ periods, members }: Props) {
   const router = useRouter()
+
   const [showForm, setShowForm] = useState(false)
   const [month, setMonth] = useState(new Date().getMonth() + 1)
   const [year, setYear] = useState(new Date().getFullYear())
@@ -50,20 +49,26 @@ export default function PeriodsClient({
 
   async function handleCreatePeriod() {
     if (!amount) return
+
     setLoading(true)
     setError("")
 
     const res = await fetch("/api/periods", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ month, year, amount: parseFloat(amount), memberIds: members.map((m) => m.id) }),
+      body: JSON.stringify({
+        month,
+        year,
+        amount: parseFloat(amount),
+        memberIds: members.map((m) => m.id),
+      }),
     })
 
     setLoading(false)
 
     if (!res.ok) {
       const data = await res.json()
-      setError(data.error ?? "Erreur lors de la création")
+      setError(data.error ?? "Erreur")
       return
     }
 
@@ -72,173 +77,208 @@ export default function PeriodsClient({
     router.refresh()
   }
 
-  async function handleToggleStatus(contributionId: string, currentStatus: string) {
-    const newStatus = currentStatus === "PAID" ? "PENDING" : "PAID"
-    await fetch(`/api/contributions/${contributionId}`, {
+  async function handleToggleStatus(id: string, status: string) {
+    const newStatus = status === "PAID" ? "PENDING" : "PAID"
+
+    await fetch(`/api/contributions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     })
+
     router.refresh()
   }
 
-  const paidCount = selectedPeriod?.contributions.filter((c) => c.status === "PAID").length ?? 0
+  // Calculs
+  const paidCount =
+    selectedPeriod?.contributions.filter((c) => c.status === "PAID").length ?? 0
+
   const totalCount = selectedPeriod?.contributions.length ?? 0
+
   const totalCollected = paidCount * (selectedPeriod?.amount ?? 0)
   const totalExpected = totalCount * (selectedPeriod?.amount ?? 0)
 
   return (
     <div className="space-y-6">
 
-      {/* Bouton créer période */}
+      {/* Action */}
       <button
         onClick={() => setShowForm(!showForm)}
-        className="bg-violet-600 hover:bg-violet-500 px-5 py-2.5 rounded-lg font-medium transition-colors"
+        className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg text-sm font-medium transition"
       >
         {showForm ? "Annuler" : "+ Nouvelle période"}
       </button>
 
       {/* Formulaire */}
       {showForm && (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-          <h2 className="font-semibold text-lg">Nouvelle période de cotisation</h2>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+          <h2 className="font-medium">Nouvelle période</h2>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">Mois</label>
-              <select
-                value={month}
-                onChange={(e) => setMonth(Number(e.target.value))}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-              >
-                {MONTHS.map((m, i) => (
-                  <option key={i} value={i + 1}>{m}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">Année</label>
-              <input
-                type="number"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-gray-400">Montant (Ar)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="5000"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
-              />
-            </div>
+
+            <select
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2"
+            >
+              {MONTHS.map((m, i) => (
+                <option key={i} value={i + 1}>{m}</option>
+              ))}
+            </select>
+
+            <input
+              type="number"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2"
+            />
+
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Montant"
+              className="bg-gray-950 border border-gray-800 rounded-lg px-3 py-2"
+            />
+
           </div>
+
           {error && <p className="text-red-400 text-sm">{error}</p>}
+
           <button
             onClick={handleCreatePeriod}
             disabled={loading}
-            className="bg-violet-600 hover:bg-violet-500 px-5 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-40"
+            className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg text-sm"
           >
-            {loading ? "Création..." : "Créer la période"}
+            {loading ? "Création..." : "Créer"}
           </button>
         </div>
       )}
 
-      {periods.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">Aucune période créée pour l`&aposinstant.</p>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Liste des périodes */}
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Périodes</p>
-            {periods.map((period) => {
-              const paid = period.contributions.filter((c) => c.status === "PAID").length
-              const total = period.contributions.length
-              return (
-                <button
-                  key={period.id}
-                  onClick={() => setSelectedPeriod(period)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    selectedPeriod?.id === period.id
-                      ? "bg-violet-600/20 border-violet-500"
-                      : "bg-gray-900 border-gray-800 hover:border-gray-600"
-                  }`}
-                >
-                  <p className="font-medium">{MONTHS[period.month - 1]} {period.year}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {paid}/{total} payés · {period.amount.toLocaleString()} Ar
-                  </p>
-                </button>
-              )
-            })}
-          </div>
+        {/* Liste périodes */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2">
+          <p className="text-xs text-gray-500 uppercase">Périodes</p>
 
-          {/* Détail de la période sélectionnée */}
-          {selectedPeriod && (
-            <div className="lg:col-span-2 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                  <p className="text-gray-400 text-sm">Collecté</p>
-                  <p className="text-xl font-bold text-green-400">{totalCollected.toLocaleString()} Ar</p>
-                </div>
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                  <p className="text-gray-400 text-sm">Attendu</p>
-                  <p className="text-xl font-bold">{totalExpected.toLocaleString()} Ar</p>
-                </div>
+          {periods.map((p) => {
+            const paid = p.contributions.filter(c => c.status === "PAID").length
+            const total = p.contributions.length
+
+            return (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPeriod(p)}
+                className={`w-full text-left p-3 rounded-lg transition ${
+                  selectedPeriod?.id === p.id
+                    ? "bg-violet-600/20 border border-violet-500"
+                    : "hover:bg-gray-800"
+                }`}
+              >
+                <p className="text-sm font-medium">
+                  {MONTHS[p.month - 1]} {p.year}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {paid}/{total} payés · {p.amount.toLocaleString()} Ar
+                </p>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Détails */}
+        {selectedPeriod && (
+          <div className="lg:col-span-2 space-y-4">
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4">
+
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <p className="text-xs text-gray-400">Collecté</p>
+                <p className="text-lg font-semibold text-green-400">
+                  {totalCollected.toLocaleString()} Ar
+                </p>
               </div>
 
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wider">
-                      <th className="text-left px-6 py-4 font-medium">Membre</th>
-                      <th className="text-left px-6 py-4 font-medium">Statut</th>
-                      <th className="text-right px-6 py-4 font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedPeriod.contributions.map((contribution) => (
-                      <tr key={contribution.id} className="border-b border-gray-800 last:border-0 hover:bg-gray-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <p className="font-medium">{contribution.member.name}</p>
-                          <p className="text-gray-500 text-xs">@{contribution.member.pseudo}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                            contribution.status === "PAID"
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <p className="text-xs text-gray-400">Attendu</p>
+                <p className="text-lg font-semibold">
+                  {totalExpected.toLocaleString()} Ar
+                </p>
+              </div>
+
+            </div>
+
+            {/* Table */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              <table className="w-full text-sm">
+
+                <thead className="text-gray-400 text-xs border-b border-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 text-left">Membre</th>
+                    <th className="px-4 py-3 text-center">Statut</th>
+                    <th className="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {selectedPeriod.contributions.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="border-t border-gray-800 hover:bg-gray-800/40 transition"
+                    >
+                      <td className="px-4 py-3">
+                        <p className="font-medium">{c.member.name}</p>
+                        <p className="text-xs text-gray-500">@{c.member.pseudo}</p>
+                      </td>
+
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            c.status === "PAID"
                               ? "bg-green-500/20 text-green-400"
-                              : contribution.status === "LATE"
+                              : c.status === "LATE"
                               ? "bg-red-500/20 text-red-400"
                               : "bg-yellow-500/20 text-yellow-400"
-                          }`}>
-                            {contribution.status === "PAID" ? "Payé" :
-                             contribution.status === "LATE" ? "En retard" : "En attente"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleToggleStatus(contribution.id, contribution.status)}
-                            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-                              contribution.status === "PAID"
-                                ? "border-gray-700 text-gray-400 hover:border-red-800 hover:text-red-400"
-                                : "border-green-800 text-green-400 hover:bg-green-500/10"
-                            }`}
-                          >
-                            {contribution.status === "PAID" ? "Annuler" : "Marquer payé"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          }`}
+                        >
+                          {c.status === "PAID"
+                            ? "Payé"
+                            : c.status === "LATE"
+                            ? "En retard"
+                            : "En attente"}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() =>
+                            handleToggleStatus(c.id, c.status)
+                          }
+                          className={`text-xs px-3 py-1.5 rounded-lg border transition ${
+                            c.status === "PAID"
+                              ? "border-gray-700 text-gray-400 hover:border-red-500 hover:text-red-400"
+                              : "border-green-700 text-green-400 hover:bg-green-500/10"
+                          }`}
+                        >
+                          {c.status === "PAID"
+                            ? "Annuler"
+                            : "Marquer payé"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+
+              </table>
             </div>
-          )}
-        </div>
-      )}
+
+          </div>
+        )}
+
+      </div>
+
     </div>
   )
 }
