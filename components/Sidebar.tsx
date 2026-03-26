@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Users, Wallet, ArrowDownRight } from "lucide-react"
+import { Users, Wallet, ArrowDownRight, LayoutDashboard } from "lucide-react"
 import SignOutButton from "@/app/dashboard/SignOutButton"
 
 export default function Sidebar() {
@@ -19,6 +19,12 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="space-y-1">
+            <SidebarItem
+              href="/dashboard"
+              icon={<LayoutDashboard size={16} />}
+              label="Dashboard"
+          />
+
 
           <SidebarItem
             href="/dashboard/members"

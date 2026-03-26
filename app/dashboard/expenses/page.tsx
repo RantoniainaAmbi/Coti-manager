@@ -15,16 +15,22 @@ export default async function ExpensesPage() {
   })
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="space-y-8">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <a href="/dashboard" className="text-gray-500 hover:text-white text-sm transition-colors">
-            ← Dashboard
-          </a>
-          <h1 className="text-3xl font-bold mt-1">📤 Dépenses</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Dépenses
+          </h1>
+          <p className="text-sm text-gray-400">
+            Suivi et gestion des dépenses
+          </p>
         </div>
-        <ExpensesClient expenses={expenses} />
       </div>
-    </main>
+ 
+      <ExpensesClient expenses={expenses} />
+
+    </div>
   )
 }
