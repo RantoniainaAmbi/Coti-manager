@@ -4,15 +4,17 @@ import { auth } from "@/lib/auth"
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 
+  const { id } = await params
+
   const member = await prisma.member.findUnique({
-    where: { id: params.id },
+    where: { id },
   })
 
   if (!member) {
