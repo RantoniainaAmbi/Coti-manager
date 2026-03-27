@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import AddPeriodForm from "@/components/dashboards/periods/AddPeriodForm"
 import PeriodList from "@/components/dashboards/periods/PeriodList"
-import PeriodDetails from "@/components/dashboards/periods/PeriodDetails"
+import PeriodDetails from "@/components/dashboards/periods/PeriodsDetails"
 import { Period, Member } from "@/components/dashboards/periods/types"
 
 type Props = {
