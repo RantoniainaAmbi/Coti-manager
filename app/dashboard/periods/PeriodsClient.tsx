@@ -1,49 +1,60 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import AddPeriodForm from "@/components/dashboards/periods/AddPeriodForm"
 import PeriodList from "@/components/dashboards/periods/PeriodList"
-import PeriodDetails from "@/components/dashboards/periods/PeriodDetails"
+import PeriodDetails from "@/components/dashboards/periods/PeriodsDetails"
 import { Period, Member } from "@/components/dashboards/periods/types"
 
-type Props = {
+interface PeriodsClientProps {
   periods: Period[]
   members: Member[]
 }
 
-export default function PeriodsClient({ periods, members }: Props) {
+export default function PeriodsClient({ periods, members }: PeriodsClientProps) {
   const router = useRouter()
+  const [showForm, setShowForm] = useState<boolean>(false)
 
-  const [showForm, setShowForm] = useState(false)
-  const [selectedPeriod, setSelectedPeriod] = useState<Period | null>(
-    periods[0] ?? null
+  // 1. On stocke l'ID et non l'objet entier
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(
+    periods[0]?.id ?? null
   )
 
-  async function handleToggleStatus(id: string, status: string) {
-    const newStatus = status === "PAID" ? "PENDING" : "PAID"
+  // 2. On "dérive" la période sélectionnée à chaque rendu
+  // Si periods change, selectedPeriod sera automatiquement à jour
+  const selectedPeriod = useMemo(() => {
+    return periods.find((p) => p.id === selectedPeriodId) || periods[0] || null
+  }, [periods, selectedPeriodId])
 
-    await fetch(`/api/contributions/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    })
-
-    router.refresh()
+  async function handleToggleStatus(id: string, status: string): Promise<void> {
+    const newStatus: string = status === "PAID" ? "PENDING" : "PAID"
+    try {
+      const response: Response = await fetch(`/api/contributions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (response.ok) {
+        router.refresh()
+      }
+    } catch (error: unknown) {
+      console.error("Erreur status:", error)
+    }
   }
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-white">Gestion des Cotisations</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-violet-600 text-white px-4 py-2 rounded-lg text-sm"
+        >
+          {showForm ? "Annuler" : "+ Nouvelle période"}
+        </button>
+      </div>
 
-      {/* Action */}
-      <button
-        onClick={() => setShowForm(!showForm)}
-        className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg text-sm font-medium transition"
-      >
-        {showForm ? "Annuler" : "+ Nouvelle période"}
-      </button>
-
-      {/* Formulaire */}
       {showForm && (
         <AddPeriodForm
           members={members}
@@ -54,26 +65,30 @@ export default function PeriodsClient({ periods, members }: Props) {
         />
       )}
 
-      {/* Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Liste périodes */}
-        <PeriodList
-          periods={periods}
-          selectedPeriod={selectedPeriod}
-          onSelectPeriod={setSelectedPeriod}
-        />
-
-        {/* Détails */}
-        {selectedPeriod && (
-          <PeriodDetails
-            period={selectedPeriod}
-            onToggleStatus={handleToggleStatus}
+        <div className="lg:col-span-1">
+          <PeriodList
+            periods={periods}
+            selectedPeriod={selectedPeriod}
+            // Ici, on passe une fonction qui met à jour l'ID
+            onSelectPeriod={(p: Period) => setSelectedPeriodId(p.id)}
           />
-        )}
+        </div>
 
+        <div className="lg:col-span-2">
+          {selectedPeriod ? (
+            <PeriodDetails
+              period={selectedPeriod}
+              members={members}
+              onToggleStatus={handleToggleStatus}
+            />
+          ) : (
+            <div className="text-gray-500 text-center p-12">
+              Sélectionnez une période
+            </div>
+          )}
+        </div>
       </div>
-
     </div>
   )
 }
