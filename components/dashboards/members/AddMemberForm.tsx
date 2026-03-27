@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation" 
 
 export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
-  // Définition d'un type local pour la cohérence
+  const router = useRouter() 
   const [formData, setFormData] = useState({
     name: "",
     pseudo: "",
@@ -18,7 +19,6 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
   }
 
   async function handleSubmit() {
-    // Validation simple
     if (Object.values(formData).some((v) => !v)) {
       setError("Veuillez remplir tous les champs")
       return
@@ -27,36 +27,37 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
     setLoading(true)
     setError("")
 
- // ... à l'intérieur de handleSubmit ...
+    try {
+      const res = await fetch("/api/members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
 
-try {
-  const res = await fetch("/api/members", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(formData),
-  })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? "Erreur lors de la création")
+      }
 
-  if (!res.ok) {
-    const data = await res.json()
-    // On jette une erreur avec le message du serveur
-    throw new Error(data.error ?? "Erreur lors de la création")
+      setFormData({ name: "", pseudo: "", email: "", password: "" })
+      
+      // --- AJOUTS ICI ---
+      router.refresh() // Force Next.js à rafraîchir les données serveurs (la liste des périodes)
+      onSaved()        // Appelle la fonction de fermeture/succès du parent
+      // -----------------
+
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError("Une erreur inattendue est survenue")
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  setFormData({ name: "", pseudo: "", email: "", password: "" })
-  onSaved()
-} catch (err: unknown) {
-  // On vérifie si c'est une instance d'Error pour accéder à .message en toute sécurité
-  if (err instanceof Error) {
-    setError(err.message)
-  } else {
-    setError("Une erreur inattendue est survenue")
-  }
-} finally {
-  setLoading(false)
-}
-  }
-
-  // Configuration des champs pour le rendu dynamique
+  // ... le reste de ton code (fields et return) reste identique
   const fields = [
     { name: "name", label: "Nom", placeholder: "Jean Dupont", type: "text" },
     { name: "pseudo", label: "Pseudo", placeholder: "jean42", type: "text" },

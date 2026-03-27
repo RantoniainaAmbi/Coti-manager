@@ -140,7 +140,7 @@ export default function PeriodDetails({
 
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <h4 className="font-semibold text-white mb-4">Membres ({totalCount})</h4>
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-100 overflow-y-auto pr-2">
           {period.contributions.map((contribution) => (
             <div
               key={contribution.id}
