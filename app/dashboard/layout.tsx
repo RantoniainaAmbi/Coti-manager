@@ -9,12 +9,10 @@ export default function DashboardLayout({
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100 flex">
 
-      {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-6 md:p-8">
         <MobileMenu />
         {children}

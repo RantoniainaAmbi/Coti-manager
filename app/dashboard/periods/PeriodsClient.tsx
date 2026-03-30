@@ -16,13 +16,10 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
   const router = useRouter()
   const [showForm, setShowForm] = useState<boolean>(false)
 
-  // 1. On stocke l'ID et non l'objet entier
   const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(
     periods[0]?.id ?? null
   )
 
-  // 2. On "dérive" la période sélectionnée à chaque rendu
-  // Si periods change, selectedPeriod sera automatiquement à jour
   const selectedPeriod = useMemo(() => {
     return periods.find((p) => p.id === selectedPeriodId) || periods[0] || null
   }, [periods, selectedPeriodId])
@@ -70,7 +67,6 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
           <PeriodList
             periods={periods}
             selectedPeriod={selectedPeriod}
-            // Ici, on passe une fonction qui met à jour l'ID
             onSelectPeriod={(p: Period) => setSelectedPeriodId(p.id)}
           />
         </div>

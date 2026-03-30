@@ -2,14 +2,13 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
-// On définit l'interface pour les paramètres de la route
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
 export async function DELETE(
   req: Request,
-  { params }: RouteParams // On précise que c'est une Promise
+  { params }: RouteParams 
 ) {
   const session = await auth()
   
@@ -18,7 +17,6 @@ export async function DELETE(
   }
 
   try {
-    // CRUCIAL : On attend que les params soient résolus avant de les déstructurer
     const { id } = await params
 
     if (!id) {
@@ -46,7 +44,6 @@ export async function PATCH(
   }
 
   try {
-    // IDEM ICI : On doit attendre les params
     const { id } = await params
     const { month, year, amount } = await req.json()
 

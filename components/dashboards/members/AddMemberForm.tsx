@@ -41,10 +41,8 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
 
       setFormData({ name: "", pseudo: "", email: "", password: "" })
       
-      // --- AJOUTS ICI ---
-      router.refresh() // Force Next.js à rafraîchir les données serveurs (la liste des périodes)
-      onSaved()        // Appelle la fonction de fermeture/succès du parent
-      // -----------------
+      router.refresh() 
+      onSaved()        
 
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -57,7 +55,6 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
     }
   }
 
-  // ... le reste de ton code (fields et return) reste identique
   const fields = [
     { name: "name", label: "Nom", placeholder: "Jean Dupont", type: "text" },
     { name: "pseudo", label: "Pseudo", placeholder: "jean42", type: "text" },

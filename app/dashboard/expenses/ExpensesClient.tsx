@@ -21,7 +21,6 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
   return (
     <div className="space-y-6">
 
-      {/* Header stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
@@ -40,7 +39,6 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
 
       </div>
 
-      {/* Action */}
       <button
         onClick={() => setShowForm(!showForm)}
         className="bg-violet-600 hover:bg-violet-500 px-4 py-2 rounded-lg text-sm font-medium transition"
@@ -48,7 +46,6 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
         {showForm ? "Annuler" : "+ Ajouter une dépense"}
       </button>
 
-      {/* Form */}
       {showForm && (
         <AddExpenseForm onSaved={() => {
           setShowForm(false)

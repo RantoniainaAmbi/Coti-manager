@@ -2,26 +2,31 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
+  
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
   }
 
-  const { id } = await params
+  try {
+    const { id } = await params
+    const { name, pseudo } = await req.json()
 
-  const member = await prisma.member.findUnique({
-    where: { id },
-  })
+    const updatedMember = await prisma.member.update({
+      where: { id },
+      data: {
+        name,
+        pseudo,
+      },
+    })
 
-  if (!member) {
-    return NextResponse.json({ error: "Membre introuvable" }, { status: 404 })
+    return NextResponse.json(updatedMember)
+  } catch (error) {
+    console.error("[MEMBER_UPDATE]", error)
+    return NextResponse.json(
+      { error: "Erreur lors de la mise à jour du membre" },
+      { status: 500 }
+    )
   }
-
-  await prisma.user.delete({ where: { id: member.userId } })
-
-  return NextResponse.json({ success: true })
 }

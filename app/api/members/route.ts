@@ -13,20 +13,17 @@ export async function POST(req: Request) {
   try {
     const { name, pseudo, email, password } = await req.json()
 
-    // 1. Vérification de l'existence
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return NextResponse.json({ error: "Cet email est déjà utilisé" }, { status: 400 })
     }
 
-    // 2. Récupérer les périodes auxquelles on veut ajouter le membre
     const allPeriods = await prisma.period.findMany({
       select: { id: true }
     })
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // 3. Création atomique (User + Member + Contributions)
     const user = await prisma.user.create({
       data: {
         email,
