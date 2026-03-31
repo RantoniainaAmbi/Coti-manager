@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import EditPeriodForm from "@/components/dashboards/periods/EditPeriodForm"
 import { Period, Member } from "@/components/dashboards/periods/types"
 
@@ -43,19 +44,23 @@ export default function PeriodDetails({
         method: "DELETE",
       })
 
-      if (res.ok) {
-        router.refresh()
-      } else {
-        alert("Erreur lors de la suppression")
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? "Erreur lors de la suppression")
       }
+
+      toast.success("Période supprimée avec succès")
+      router.refresh()
     } catch (error) {
       console.error(error)
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression")
     } finally {
       setIsDeleting(false)
     }
   }
 
   const paidCount = period.contributions.filter(c => c.status === "PAID").length
+  const targetAmount = period.amount * period.contributions.length
   const totalCount = period.contributions.length
   const progress = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0
 
@@ -92,10 +97,10 @@ export default function PeriodDetails({
               {MONTHS[period.month - 1]} {period.year}
             </h3>
             <p className="text-gray-400 text-sm mt-1">
-              Objectif : <span className="text-violet-400 font-medium">{period.amount}€</span>
+              Objectif : <span className="text-violet-400 font-medium">{targetAmount}Ar</span>
             </p>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={() => setShowEditForm(true)}

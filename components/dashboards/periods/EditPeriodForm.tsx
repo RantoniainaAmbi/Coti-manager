@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, FormEvent } from "react"
+import { toast } from "sonner"
 import { Member } from "./types"
 
 interface EditPeriodFormProps {
@@ -40,25 +41,24 @@ export default function EditPeriodForm({
       const response: Response = await fetch(`/api/periods/${periodId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          month: Number(month), 
-          year: Number(year), 
-          amount: Number(amount) 
+        body: JSON.stringify({
+          month: Number(month),
+          year: Number(year),
+          amount: Number(amount)
         }),
       })
 
       if (!response.ok) {
-        const data = await response.json() as { error: string }
-        throw new Error(data.error || "Erreur lors de la modification")
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error || "Erreur lors de la modification")
       }
 
+      toast.success("Période mise à jour avec succès")
       onSaved()
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError("Une erreur inconnue est survenue")
-      }
+      const message = err instanceof Error ? err.message : "Une erreur inconnue est survenue"
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -67,7 +67,7 @@ export default function EditPeriodForm({
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
       <h3 className="text-lg font-semibold text-white mb-4">Modifier la période</h3>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-3 rounded-lg">

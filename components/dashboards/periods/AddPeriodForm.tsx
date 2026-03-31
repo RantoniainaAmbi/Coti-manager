@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, ChangeEvent } from "react"
+import { toast } from "sonner"
 
 const MONTHS: string[] = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
@@ -26,7 +27,12 @@ export default function AddPeriodForm({ members, onSaved }: AddPeriodFormProps) 
   }
 
   async function handleSubmit(): Promise<void> {
-    if (!formData.amount) return
+    if (!formData.amount) {
+      const message = "Veuillez renseigner le montant de la période"
+      setError(message)
+      toast.error(message)
+      return
+    }
 
     setLoading(true)
     setError("")
@@ -36,7 +42,6 @@ export default function AddPeriodForm({ members, onSaved }: AddPeriodFormProps) 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Force la conversion en nombre ici
           month: Number(formData.month),
           year: Number(formData.year),
           amount: parseFloat(formData.amount),
@@ -44,15 +49,14 @@ export default function AddPeriodForm({ members, onSaved }: AddPeriodFormProps) 
         }),
       })
 
-      // Gestion sécurisée de la réponse
       if (!res.ok) {
         const contentType = res.headers.get("content-type")
-        if (contentType && contentType.includes("application/json")) {
-          const data = await res.json()
-          setError(data.error ?? "Erreur lors de la création")
-        } else {
-          setError("Le serveur a renvoyé une erreur inattendue.")
-        }
+        const message = contentType?.includes("application/json")
+          ? ((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? "Erreur lors de la création"
+          : "Le serveur a renvoyé une erreur inattendue."
+
+        setError(message)
+        toast.error(message)
         return
       }
 
@@ -61,9 +65,12 @@ export default function AddPeriodForm({ members, onSaved }: AddPeriodFormProps) 
         year: new Date().getFullYear(),
         amount: ""
       })
+      toast.success("Période créée avec succès")
       onSaved()
     } catch (err: unknown) {
-      setError("Erreur réseau ou serveur.")
+      const message = "Erreur réseau ou serveur."
+      setError(message)
+      toast.error(message)
       console.error(err)
     } finally {
       setLoading(false)

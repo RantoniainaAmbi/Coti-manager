@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Chart from "@/components/Chart"
 import StatCard from "@/components/StatCard"
+import { Users, Wallet, TrendingDown, Landmark } from "lucide-react" 
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -11,6 +12,7 @@ export default async function DashboardPage() {
     redirect("/login")
   }
 
+  // Récupération des données
   const totalMembers = await prisma.member.count()
 
   const periods = await prisma.period.findMany({
@@ -42,24 +44,51 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-
       <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-gray-400 text-sm">Vue globale</p>
+        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <p className="text-gray-400 text-sm">Vue globale de la trésorerie</p>
       </div>
 
+      {/* Grille des statistiques avec variantes de couleurs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-        <StatCard label="Membres" value={totalMembers} />
-        <StatCard label="Collecté" value={`${totalCollected} Ar`} />
-        <StatCard label="Dépenses" value={`${totalExpensesAmount} Ar`} />
+        
+        {/* Membres - Variante Info (Violet) */}
+        <StatCard 
+          label="Membres" 
+          value={totalMembers} 
+          variant="info"
+          icon={<Users size={18} />} 
+        />
+
+        {/* Collecté - Variante Success (Émeraude) */}
+        <StatCard 
+          label="Collecté" 
+          value={`${totalCollected.toLocaleString()} Ar`} 
+          variant="success"
+          icon={<Wallet size={18} />}
+        />
+
+        {/* Dépenses - Variante Danger (Rose/Rouge) */}
+        <StatCard 
+          label="Dépenses" 
+          value={`${totalExpensesAmount.toLocaleString()} Ar`} 
+          variant="danger"
+          icon={<TrendingDown size={18} />}
+        />
+
+        {/* Solde - Dynamique selon la balance */}
         <StatCard
           label="Solde"
-          value={`${balance} Ar`}
-          highlight={balance >= 0 ? "positive" : "negative"}
+          value={`${balance.toLocaleString()} Ar`}
+          variant={balance >= 0 ? "success" : "danger"}
+          icon={<Landmark size={18} />}
         />
       </div>
 
-      <Chart data={chartData} />
+      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+        <h3 className="text-lg font-medium text-white mb-6">Analyse des flux</h3>
+        <Chart data={chartData} />
+      </div>
 
     </div>
   )

@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Filter } from "lucide-react" // Imports utiles
+import { Search } from "lucide-react"
+import { toast } from "sonner"
 import AddPeriodForm from "@/components/dashboards/periods/AddPeriodForm"
 import PeriodList from "@/components/dashboards/periods/PeriodList"
 import PeriodDetails from "@/components/dashboards/periods/PeriodsDetails"
@@ -20,45 +21,53 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
     periods[0]?.id ?? null
   )
 
-  // --- NOUVEAUX ÉTATS POUR LE FILTRAGE ---
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PAID" | "PENDING">("ALL")
 
   const selectedPeriod = useMemo(() => {
     const period = periods.find((p) => p.id === selectedPeriodId) || periods[0] || null
-    
+
     if (!period) return null
 
-    // On crée une copie de la période avec les contributions filtrées
     const filteredContributions = period.contributions.filter((c) => {
-      const matchesSearch = c.member.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            c.member.pseudo.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "ALL" || c.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
+      const matchesSearch = c.member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.member.pseudo.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === "ALL" || c.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
 
-    return { ...period, contributions: filteredContributions };
+    return { ...period, contributions: filteredContributions }
   }, [periods, selectedPeriodId, searchTerm, statusFilter])
 
   async function handleToggleStatus(id: string, status: string): Promise<void> {
     const newStatus: string = status === "PAID" ? "PENDING" : "PAID"
+
     try {
       const response: Response = await fetch(`/api/contributions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       })
-      if (response.ok) {
-        router.refresh()
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? "Erreur lors de la mise à jour du statut")
       }
+
+      toast.success(
+        newStatus === "PAID"
+          ? "Cotisation marquée comme payée"
+          : "Cotisation repassée en attente"
+      )
+      router.refresh()
     } catch (error: unknown) {
       console.error("Erreur status:", error)
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut")
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-white">Gestion des Cotisations</h2>
         <button
@@ -79,7 +88,6 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
         />
       )}
 
-      {/* BARRE DE RECHERCHE ET FILTRES */}
       <div className="flex flex-col md:flex-row gap-4 bg-gray-900/50 p-4 rounded-xl border border-gray-800">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
@@ -91,16 +99,16 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
             className="w-full bg-gray-950 border border-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:ring-1 focus:ring-violet-500 outline-none"
           />
         </div>
-        
+
         <div className="flex bg-gray-950 rounded-lg p-1 border border-gray-800">
           {(["ALL", "PAID", "PENDING"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
-                statusFilter === s 
-                ? "bg-violet-600 text-white shadow-lg" 
-                : "text-gray-400 hover:text-white"
+                statusFilter === s
+                  ? "bg-violet-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               {s === "ALL" ? "Tous" : s === "PAID" ? "Payés" : "Impayés"}
@@ -109,7 +117,6 @@ export default function PeriodsClient({ periods, members }: PeriodsClientProps) 
         </div>
       </div>
 
-      {/* GRILLE PRINCIPALE */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <PeriodList

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 type Member = {
   id: string
@@ -36,12 +37,18 @@ export default function EditMemberForm({ member, onClose }: EditMemberFormProps)
         body: JSON.stringify(formData),
       })
 
-      if (!res.ok) throw new Error("Erreur lors de la modification")
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? "Erreur lors de la modification")
+      }
 
-      router.refresh() 
-      onClose()       
+      toast.success("Membre modifié avec succès")
+      router.refresh()
+      onClose()
     } catch (err: Error | unknown) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue")
+      const message = err instanceof Error ? err.message : "Une erreur est survenue"
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -50,7 +57,7 @@ export default function EditMemberForm({ member, onClose }: EditMemberFormProps)
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
       <h2 className="font-semibold text-lg text-white">Modifier le membre</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1">
           <label className="text-sm text-gray-400 block">Nom</label>

@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation" 
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
-  const router = useRouter() 
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: "",
     pseudo: "",
@@ -20,10 +21,12 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
 
   async function handleSubmit() {
     if (Object.values(formData).some((v) => !v)) {
-      setError("Veuillez remplir tous les champs")
+      const message = "Veuillez remplir tous les champs"
+      setError(message)
+      toast.error(message)
       return
     }
-    
+
     setLoading(true)
     setError("")
 
@@ -35,21 +38,19 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error ?? "Erreur lors de la création")
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? "Erreur lors de la création")
       }
 
       setFormData({ name: "", pseudo: "", email: "", password: "" })
-      
-      router.refresh() 
-      onSaved()        
+      toast.success("Membre créé avec succès")
 
+      router.refresh()
+      onSaved()
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError("Une erreur inattendue est survenue")
-      }
+      const message = err instanceof Error ? err.message : "Une erreur inattendue est survenue"
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -65,7 +66,7 @@ export default function AddMemberForm({ onSaved }: { onSaved: () => void }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 md:p-6 space-y-4 animate-in fade-in slide-in-from-top-2">
       <h2 className="font-semibold text-base md:text-lg text-white">Nouveau membre</h2>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         {fields.map((field) => (
           <div key={field.name} className="space-y-1">

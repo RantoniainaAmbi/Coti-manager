@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import AddExpenseForm from "@/components/dashboards/expenses/AddExpenseForm"
 import ExpenseTable from "@/components/dashboards/expenses/ExpenseTable"
 import { Expense } from "@/components/dashboards/expenses/types"
@@ -14,15 +15,25 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
 
   async function handleDelete(id: string) {
     if (!confirm("Supprimer cette dépense ?")) return
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" })
-    router.refresh()
+
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" })
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        throw new Error(data?.error ?? "Erreur lors de la suppression de la dépense")
+      }
+
+      toast.success("Dépense supprimée avec succès")
+      router.refresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Une erreur est survenue")
+    }
   }
 
   return (
     <div className="space-y-6">
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <p className="text-xs text-gray-400">Total des dépenses</p>
           <p className="text-2xl font-semibold text-red-400 mt-1">
@@ -36,7 +47,6 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
             {expenses.length}
           </p>
         </div>
-
       </div>
 
       <button
@@ -53,7 +63,6 @@ export default function ExpensesClient({ expenses }: { expenses: Expense[] }) {
         }} />
       )}
 
-      {/* Table */}
       <ExpenseTable expenses={expenses} onDelete={handleDelete} />
     </div>
   )

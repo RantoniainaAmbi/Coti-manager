@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 
 export default function AddExpenseForm({ onSaved }: { onSaved: () => void }) {
   const [formData, setFormData] = useState({
@@ -16,35 +17,49 @@ export default function AddExpenseForm({ onSaved }: { onSaved: () => void }) {
   }
 
   async function handleSubmit() {
-    if (!formData.label || !formData.amount) return
+    if (!formData.label || !formData.amount) {
+      const message = "Veuillez renseigner le libellé et le montant"
+      setError(message)
+      toast.error(message)
+      return
+    }
 
     setLoading(true)
     setError("")
 
-    const res = await fetch("/api/expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        label: formData.label,
-        amount: parseFloat(formData.amount),
-        date: formData.date,
-      }),
-    })
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: formData.label,
+          amount: parseFloat(formData.amount),
+          date: formData.date,
+        }),
+      })
 
-    setLoading(false)
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
+        const message = data?.error ?? "Erreur lors de l'ajout de la dépense"
+        setError(message)
+        toast.error(message)
+        return
+      }
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? "Erreur")
-      return
+      setFormData({
+        label: "",
+        amount: "",
+        date: new Date().toISOString().split("T")[0]
+      })
+      toast.success("Dépense ajoutée avec succès")
+      onSaved()
+    } catch {
+      const message = "Erreur réseau ou serveur."
+      setError(message)
+      toast.error(message)
+    } finally {
+      setLoading(false)
     }
-
-    setFormData({
-      label: "",
-      amount: "",
-      date: new Date().toISOString().split("T")[0]
-    })
-    onSaved()
   }
 
   return (
